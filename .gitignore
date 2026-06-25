@@ -1,0 +1,8 @@
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.streamlit/secrets.toml
+generate_pdf.py
+NIG_Forecast_Challenge_Desk_TDR.pdf

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(taskkill *)",
+      "Bash(python -c \"open\\('main.py','w'\\).write\\(''\\)\")",
+      "Bash(del tools\\\\portfolio_tools.py agent\\\\prb_agent.py eval\\\\evaluator.py)",
+      "Bash(python -c \"open\\(r'C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\main.py','w'\\).write\\(''\\)\")",
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\tools\\\\challenge_tools.py\" -Raw; $content.Length)"
+    ]
+  }
+}
