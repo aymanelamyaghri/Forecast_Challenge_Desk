@@ -101,25 +101,53 @@ html, body, [class*="css"] {
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-  <span style="font-size:1.05rem;font-weight:700;color:#111827">Forecast Challenge Desk</span>
-  <span style="font-size:0.72rem;color:#9ca3af">NorthStar Infrastructure Group · Finance</span>
-</div>
-<div style="height:1px;background:#e5e7eb;margin-bottom:16px"></div>
-""", unsafe_allow_html=True)
+<div style="
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  border-radius: 10px;
+  padding: 28px 32px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+">
+  <div style="
+    position:absolute; top:-30px; right:-30px;
+    width:160px; height:160px; border-radius:50%;
+    background: rgba(255,255,255,0.04);
+  "></div>
+  <div style="
+    position:absolute; bottom:-50px; right:80px;
+    width:220px; height:220px; border-radius:50%;
+    background: rgba(255,255,255,0.03);
+  "></div>
 
-# ── Month selector ─────────────────────────────────────────────────────────────
-st.markdown('<div style="font-size:0.72rem;color:#6b7280;margin-bottom:6px;font-weight:500">REVIEW PERIOD</div>', unsafe_allow_html=True)
-cycle_options = {PERIOD_LABELS[c]: c for c in REVIEW_CYCLES}
-cols_month = st.columns(len(REVIEW_CYCLES))
-for i, (label, cyc) in enumerate(cycle_options.items()):
-    with cols_month[i]:
-        if st.button(label, key=f"m_{cyc}",
-                     type="primary" if cyc == st.session_state.get("sel_cycle", CURRENT_CYCLE) else "secondary",
-                     use_container_width=True):
-            st.session_state.sel_cycle = cyc
-            st.session_state.update(result=None, trace=[], elapsed=None, live_dec=[])
-            st.rerun()
+  <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#60a5fa;margin-bottom:10px">
+    NorthStar Infrastructure Group &nbsp;·&nbsp; Finance
+  </div>
+
+  <div style="font-size:1.75rem;font-weight:800;color:#f8fafc;letter-spacing:-0.03em;line-height:1.15;margin-bottom:12px">
+    Forecast Challenge Desk
+  </div>
+
+  <div style="font-size:0.82rem;color:#94a3b8;line-height:1.65;max-width:560px">
+    Run AI agents to review project cost forecasts each month.
+    Surfaces <strong style="color:#cbd5e1">optimism bias</strong>,
+    <strong style="color:#cbd5e1">hidden overruns</strong>, and
+    <strong style="color:#cbd5e1">PM credibility gaps</strong>
+    before they reach the finance committee.
+  </div>
+
+  <div style="display:flex;gap:20px;margin-top:18px;flex-wrap:wrap">
+    <div style="font-size:0.7rem;color:#60a5fa;display:flex;align-items:center;gap:5px">
+      <span style="width:6px;height:6px;background:#60a5fa;border-radius:50%;display:inline-block"></span>
+      20 projects reviewed per cycle
+    </div>
+    <div style="font-size:0.7rem;color:#60a5fa;display:flex;align-items:center;gap:5px">
+      <span style="width:6px;height:6px;background:#60a5fa;border-radius:50%;display:inline-block"></span>
+      Deep-dive investigation with specialised tools
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 sel_cycle = st.session_state.get("sel_cycle", CURRENT_CYCLE)
 sel_label = PERIOD_LABELS.get(sel_cycle, f"Period {sel_cycle}")
@@ -222,12 +250,29 @@ def _card_html(d, portfolio):
     )
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
-tab_review, tab_data, tab_tools = st.tabs(["Review", "Data", "Tools"])
+tab_data, tab_tools, tab_review = st.tabs(["Data", "Tools", "Review"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — REVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_review:
+    # ── Month selector ────────────────────────────────────────────────────────
+    st.markdown('<div style="font-size:0.72rem;color:#6b7280;margin-bottom:6px;font-weight:500">REVIEW PERIOD</div>', unsafe_allow_html=True)
+    cycle_options = {PERIOD_LABELS[c]: c for c in REVIEW_CYCLES}
+    cols_month = st.columns(len(REVIEW_CYCLES))
+    for i, (label, cyc) in enumerate(cycle_options.items()):
+        with cols_month[i]:
+            if st.button(label, key=f"m_{cyc}",
+                         type="primary" if cyc == st.session_state.get("sel_cycle", CURRENT_CYCLE) else "secondary",
+                         use_container_width=True):
+                st.session_state.sel_cycle = cyc
+                st.session_state.update(result=None, trace=[], elapsed=None, live_dec=[])
+                st.rerun()
+
+    sel_cycle = st.session_state.get("sel_cycle", CURRENT_CYCLE)
+    sel_label = PERIOD_LABELS.get(sel_cycle, f"Period {sel_cycle}")
+    gt        = CYCLE_GROUND_TRUTH.get(sel_cycle, {})
+
     portfolio = _port(sel_cycle)
 
     col_btn, col_status = st.columns([1, 3])
@@ -296,27 +341,7 @@ with tab_review:
         for d in sorted(decisions, key=lambda x: order.get(x.get("decision", ""), 9)):
             st.markdown(_card_html(d, portfolio), unsafe_allow_html=True)
 
-        # Hard cases
-        if sel_cycle == CURRENT_CYCLE:
-            st.markdown('<div class="divider"></div><div class="sec">Hard Case Detection</div>', unsafe_allow_html=True)
-            dec_map = {d["project_id"]: d["decision"].upper() for d in decisions}
-            caught_n = 0
-            hc_html = '<div class="hc-row">'
-            for pid, (label, desc) in HARD_CASES.items():
-                caught = dec_map.get(pid) == "FLAG"
-                if caught: caught_n += 1
-                cls = "hc-ok" if caught else "hc-miss"
-                status = "Caught" if caught else "Missed"
-                hc_html += (
-                    f'<div class="hc-chip {cls}">'
-                    f'<strong>{status}</strong> · {label}'
-                    f'<br><span style="font-size:0.63rem;opacity:0.75">{pid} · {desc}</span>'
-                    f'</div>')
-            hc_html += '</div>'
-            st.markdown(hc_html, unsafe_allow_html=True)
-        else:
-            caught_n = 0
-            dec_map  = {d["project_id"]: d["decision"].upper() for d in decisions}
+        dec_map = {d["project_id"]: d["decision"].upper() for d in decisions}
 
         # Accuracy metrics
         st.markdown('<div class="divider"></div><div class="sec">Accuracy — ' + sel_label + '</div>', unsafe_allow_html=True)
@@ -332,13 +357,12 @@ with tab_review:
         n_should = sum(1 for v in gt.values() if v in ("ESCALATE", "CHALLENGE"))
         far = len(false_acc) / max(1, n_should)
 
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3 = st.columns(3)
         c1.metric("Accuracy", f"{correct/total*100:.0f}%" if total else "--")
         c2.metric("False Accept Rate", f"{far*100:.0f}%",
                   delta="OK" if far < .10 else "Above threshold",
                   delta_color="normal" if far < .10 else "inverse")
-        c3.metric("Hard Cases", f"{caught_n}/5" if sel_cycle == CURRENT_CYCLE else "N/A")
-        c4.metric("Tool Calls", str(n_tools))
+        c3.metric("Tool Calls", str(n_tools))
         if false_acc:
             st.warning(f"False accepts: {', '.join(false_acc)}")
 
@@ -570,33 +594,44 @@ with tab_data:
 with tab_tools:
     st.markdown(
         '<div style="font-size:0.8rem;color:#6b7280;margin-bottom:16px;line-height:1.6">'
-        'Each agent runs a ReAct loop and calls tools adaptively based on what each tool reveals. '
-        'Clean projects use 1 call. Deeply suspicious ones use up to 7. '
-        'Tools return deterministic data — the LLM never generates numbers, only interprets them.'
+        'Each project is investigated by a dedicated AI agent running a ReAct loop. '
+        'The agent starts with a portfolio-wide scan, then calls tools one at a time — each tool result decides whether to dig deeper or stop. '
+        'Clean projects typically need 1–2 calls; high-risk ones use up to 7. '
+        'All tools return structured, deterministic data — the agent never generates numbers, only interprets them.'
         '</div>',
         unsafe_allow_html=True)
 
     TOOLS_DEF = [
-        ("Portfolio",    "load_all_summaries",            "Once per run — shared across all agents",
-         "Compact scan of all 20 projects: CPI, SPI, EAC gap, and signal flags. Passed as context to every agent before investigation begins."),
-        ("Portfolio",    "get_portfolio_exposure_ranking","Once per run — shared across all agents",
-         "All 20 projects ranked by $ at risk (System EAC − BAC). Agents use this to calibrate investigation depth relative to portfolio exposure."),
-        ("Investigation","get_project_detail",            "Any project with !! signals",
-         "Full EVM snapshot: CPI/SPI trend, credibility verdict, implied future CPI, WBS per-package CPI, contingency status, PM narrative. CO alert shown if hidden change orders exist."),
-        ("Deep-dive",    "get_change_order_exposure",     "CO alert in project detail",
-         "Full change order register. Reveals pending/disputed costs excluded from PM EAC. Highest impact on REIMBURSABLE contracts — undisclosed COs flow directly to client budget."),
-        ("Deep-dive",    "get_wbs_cost_breakdown",        "HIDDEN_WBS signal (Civil CPI < 0.78)",
-         "Dollar overrun per WBS package at completion. Converts a CPI signal to a concrete figure: Civil CPI 0.61 → $13.4M projected overrun, 90% of total project exposure."),
-        ("Deep-dive",    "get_spend_acceleration",        "SPI_TRAP signal (SPI < 0.88, CPI clean)",
-         "Monthly actual-cost increment trend over 6 periods. Acceleration invoices appear as future AC spikes — CPI drops before the monthly snapshot catches it."),
-        ("Deep-dive",    "get_cpi_history",               "STRUCTURAL_DECLINE or STEP_CHANGE",
-         "Month-by-month CPI trajectory. Distinguishes structural decline (same direction 6+ periods) from a step-change event — different failure modes, different FLAG rationale."),
-        ("Deep-dive",    "get_pm_eac_history",            "PM credibility UNLIKELY or NOT_CREDIBLE",
-         "PM's submitted EAC vs system EAC over 6 months. Persistent gap of 10–15% indicates systematic optimism bias independent of current period performance."),
-        ("Deep-dive",    "get_prior_explanations",        "REPEATED_NARRATIVE signal only",
-         "3 months of PM narrative text. Detects whether the same reassurance phrases appear across months while CPI continues to worsen."),
-        ("Decision",     "write_decision",                "Once per agent — terminates the loop",
-         "Commits FLAG, ACCEPT, or NEEDS_EVIDENCE. Comment must cite specific numbers. Agent is enforcement-isolated to its own project ID — cross-project writes return an error."),
+        ("Portfolio",    "load_all_summaries",
+         "Called once at the start of every run, shared across all 20 agents.",
+         "A compact snapshot of the entire portfolio: CPI, SPI, EAC gap, and risk signal flags for each project. Gives every agent baseline context before any investigation begins."),
+        ("Portfolio",    "get_portfolio_exposure_ranking",
+         "Called once at the start of every run, shared across all 20 agents.",
+         "All projects ranked by dollar exposure (System EAC minus BAC). Agents use this to calibrate how deeply to investigate relative to each project's financial footprint."),
+        ("Investigation","get_project_detail",
+         "Called for any project that shows at least one risk signal in the portfolio scan.",
+         "Full EVM snapshot for a single project: CPI/SPI trend, EAC credibility rating, implied future cost performance needed for recovery, per-package WBS breakdown, contingency status, and the PM's narrative. Raises a change order alert if undisclosed COs exist."),
+        ("Deep-dive",    "get_change_order_exposure",
+         "Called when project detail flags undisclosed or pending change orders.",
+         "The full change order register for the project, including pending and disputed items not yet reflected in the PM's EAC. Most impactful on reimbursable contracts, where hidden COs flow directly to the client's budget."),
+        ("Deep-dive",    "get_wbs_cost_breakdown",
+         "Called when a specific WBS package shows a CPI below 0.78, signalling a concentrated cost problem.",
+         "Projected overrun per work package at completion. Converts a headline CPI signal into a concrete dollar figure — e.g. Civil & Structural CPI 0.61 translates to $13.4M projected overrun, representing 90% of the project's total exposure."),
+        ("Deep-dive",    "get_spend_acceleration",
+         "Called when schedule is slipping (SPI < 0.88) but cost performance looks healthy — a common masking pattern.",
+         "Monthly actual-cost increments over the last 6 periods. Spending acceleration shows up here before it impacts CPI, because invoices from accelerated work arrive after the monthly snapshot."),
+        ("Deep-dive",    "get_cpi_history",
+         "Called when the CPI trend shows prolonged decline or a sudden one-period drop.",
+         "Month-by-month CPI trajectory for the full project history. Distinguishes a structural decline (consistent underperformance over 6+ periods) from a step-change event — the two failure modes have different root causes and different FLAG rationales."),
+        ("Deep-dive",    "get_pm_eac_history",
+         "Called when the PM's EAC credibility is rated UNLIKELY or NOT_CREDIBLE.",
+         "The PM's submitted EAC versus the system-calculated EAC over 6 months. A persistent gap of 10–15% is a reliable indicator of systematic optimism bias, separate from any single period's performance."),
+        ("Deep-dive",    "get_prior_explanations",
+         "Called only when the same PM narrative text has appeared in multiple consecutive months.",
+         "Three months of PM narrative text side by side. Identifies copy-pasted reassurances used while CPI continues to worsen — a credibility signal that the PM is not engaging with the underlying issue."),
+        ("Decision",     "write_decision",
+         "Called once per agent as the final step — commits the decision and ends the investigation loop.",
+         "Records FLAG, ACCEPT, or NEEDS_EVIDENCE for the project. The comment must cite specific numbers from the investigation. Each agent is scoped to its own project ID; attempting to write a decision for another project returns an error."),
     ]
 
     CAT_COLORS = {
@@ -607,7 +642,7 @@ with tab_tools:
     }
 
     tbl = '<table class="tbl"><thead><tr>'
-    for h in ["Category", "Tool", "When called", "Returns"]:
+    for h in ["Category", "Tool", "When it's called", "What it reveals"]:
         tbl += f'<th>{h}</th>'
     tbl += '</tr></thead><tbody>'
 
@@ -616,11 +651,11 @@ with tab_tools:
         bg = "#fff" if i % 2 == 0 else "#fafafa"
         tbl += (
             f'<tr style="background:{bg}">'
-            f'<td style="white-space:nowrap">'
+            f'<td style="white-space:nowrap;vertical-align:top;padding-top:10px">'
             f'<span class="pill" style="background:{bc};color:{fc}">{cat}</span></td>'
-            f'<td><code style="font-size:0.75rem;color:#111827;font-weight:600">{name}</code></td>'
-            f'<td style="color:#6b7280;font-size:0.73rem">{trigger}</td>'
-            f'<td style="color:#374151;font-size:0.75rem;line-height:1.5">{desc}</td>'
+            f'<td style="vertical-align:top;padding-top:10px"><code style="font-size:0.75rem;color:#111827;font-weight:600">{name}</code></td>'
+            f'<td style="color:#6b7280;font-size:0.73rem;line-height:1.55;vertical-align:top;padding-top:10px">{trigger}</td>'
+            f'<td style="color:#374151;font-size:0.75rem;line-height:1.55;vertical-align:top;padding-top:10px">{desc}</td>'
             f'</tr>')
     tbl += '</tbody></table>'
     st.markdown(tbl, unsafe_allow_html=True)

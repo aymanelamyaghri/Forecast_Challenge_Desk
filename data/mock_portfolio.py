@@ -595,6 +595,7 @@ _MONTH_LABELS = {
 MONTHLY_RUNS = [14, 13, 12, 11, 10, 9]
 
 
+
 def period_label(period: int) -> str:
     return _MONTH_LABELS.get(period, f"Period {period}")
 

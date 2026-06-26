@@ -5,7 +5,8 @@
       "Bash(python -c \"open\\('main.py','w'\\).write\\(''\\)\")",
       "Bash(del tools\\\\portfolio_tools.py agent\\\\prb_agent.py eval\\\\evaluator.py)",
       "Bash(python -c \"open\\(r'C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\main.py','w'\\).write\\(''\\)\")",
-      "PowerShell($content = Get-Content \"C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\tools\\\\challenge_tools.py\" -Raw; $content.Length)"
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\tools\\\\challenge_tools.py\" -Raw; $content.Length)",
+      "PowerShell(& \"C:\\\\Users\\\\Aymane\\\\earnings-agent\\\\venv\\\\Scripts\\\\python.exe\" \"C:\\\\Users\\\\Aymane\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Aymane-earnings-agent\\\\2298cc5d-dc74-4ef5-a730-0483072fcdb3\\\\scratchpad\\\\extract_stats.py\" 2>&1)"
     ]
   }
 }
